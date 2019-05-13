@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.util.Enumeration;
+import java.util.Random;
 import java.util.Set;
 
 import javax.swing.JTextField;
@@ -45,6 +46,7 @@ public class AppSuperCheapAuto extends JFrame {
 	private NouveauClient nc = new NouveauClient();
 	private Ecouteur ec = new Ecouteur();
 	private DefaultTableModel modele;
+	private Random rand = new Random();
 	
 	private JPanel panelClient;
 	private JLabel jlNumMembre;
@@ -359,8 +361,8 @@ public class AppSuperCheapAuto extends JFrame {
 		public void actionPerformed(ActionEvent e) {
 			if (e.getSource() == tfNumMembre) {
 				String num = tfNumMembre.getText();
-				System.out.println(num);
-				System.out.println();
+				//System.out.println(num);
+				//System.out.println();
 				
 				if (EnsembleClients.getListe().containsKey(num)) {
 					tfNomClient.setText(EnsembleClients.getListe().get(num).getNom());
@@ -374,6 +376,9 @@ public class AppSuperCheapAuto extends JFrame {
 			}
 			else if (e.getSource() == nouvClient) {
 				nc.setVisible(true);
+				int n = 100000 + new Random().nextInt(900000);
+				String numGen = Integer.toString(n);
+				System.out.println(numGen);
 			}
 		}
 		
