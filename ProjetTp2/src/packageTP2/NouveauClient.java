@@ -9,6 +9,9 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.JLabel;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
 import javax.swing.JTextField;
 
 public class NouveauClient extends JDialog {
@@ -19,6 +22,8 @@ public class NouveauClient extends JDialog {
 	private JTextField tfNom;
 	private JButton ok;
 	private JButton annuler;
+	
+	private Ecouteur ec = new Ecouteur();
 	
 
 	/***********************************
@@ -55,6 +60,7 @@ public class NouveauClient extends JDialog {
 		
 		tfNumero = new JTextField();
 		tfNumero.setBounds(333, 99, 100, 26);
+		tfNumero.setEditable(false);
 		getContentPane().add(tfNumero);
 		tfNumero.setColumns(10);
 		
@@ -71,6 +77,22 @@ public class NouveauClient extends JDialog {
 		annuler.setBounds(264, 180, 117, 71);
 		getContentPane().add(annuler);
 		
+		annuler.addActionListener(ec);
+		
+		
+	}
+	
+	public class Ecouteur implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			if (e.getSource() == annuler) {
+				tfNumero.setText(null);
+				tfNom.setText(null);
+				NouveauClient.this.dispose();
+			}
+			
+		}
 		
 	}
 }

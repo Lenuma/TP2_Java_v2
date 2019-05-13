@@ -17,6 +17,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DecimalFormat;
+import java.util.Enumeration;
+import java.util.Set;
 
 import javax.swing.JTextField;
 import javax.swing.JComboBox;
@@ -37,8 +39,10 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import javax.swing.JMenuBar;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 
 public class AppSuperCheapAuto extends JFrame {
+	private NouveauClient nc = new NouveauClient();
 	private Ecouteur ec = new Ecouteur();
 	private DefaultTableModel modele;
 	
@@ -56,7 +60,7 @@ public class AppSuperCheapAuto extends JFrame {
 	private JLabel jlQte;
 	private JTextField tfPrixUni;
 	private JTextField tfQte;
-	private JComboBox jcBoxArticle;
+	private JComboBox comboArticle;
 	private JButton btnAchat;
 	private JButton btnTerminer;
 	private JPanel panelFacture;
@@ -127,7 +131,7 @@ public class AppSuperCheapAuto extends JFrame {
 		jlNomClient.setBounds(10, 34, 246, 14);
 		panelClient.add(jlNomClient);
 		
-		jlPointsBoni = new JLabel("Nombre de points boni \u00E0 ce jour");
+		jlPointsBoni = new JLabel("Nombre de points boni \u00E0 ce jour:");
 		jlPointsBoni.setFont(new Font("Dialog", Font.BOLD, 13));
 		jlPointsBoni.setBounds(10, 59, 246, 14);
 		panelClient.add(jlPointsBoni);
@@ -139,12 +143,14 @@ public class AppSuperCheapAuto extends JFrame {
 		
 		tfNomClient = new JTextField();
 		tfNomClient.setColumns(10);
-		tfNomClient.setBounds(311, 32, 140, 20);
+		tfNomClient.setBounds(268, 32, 183, 20);
+		tfNomClient.setEditable(false);
 		panelClient.add(tfNomClient);
 		
 		tfPointsBoni = new JTextField();
 		tfPointsBoni.setColumns(10);
 		tfPointsBoni.setBounds(365, 57, 86, 20);
+		tfPointsBoni.setEditable(false);
 		panelClient.add(tfPointsBoni);
 		
 		panelCommande = new JPanel();
@@ -184,9 +190,9 @@ public class AppSuperCheapAuto extends JFrame {
 		tfQte.setBounds(207, 82, 85, 26);
 		panelCommande.add(tfQte);
 		
-		jcBoxArticle = new JComboBox();
-		jcBoxArticle.setBounds(71, 28, 221, 27);
-		panelCommande.add(jcBoxArticle);
+		comboArticle = new JComboBox();
+		comboArticle.setBounds(71, 28, 221, 27);
+		panelCommande.add(comboArticle);
 		
 		btnAchat = new JButton("Achat");
 		btnAchat.setFont(new Font("Lucida Grande", Font.BOLD, 13));
@@ -200,7 +206,7 @@ public class AppSuperCheapAuto extends JFrame {
 		
 		panelFacture = new JPanel();
 		panelFacture.setBackground(Color.RED);
-		panelFacture.setBounds(10, 240, 461, 266);
+		panelFacture.setBounds(10, 240, 461, 258);
 		getContentPane().add(panelFacture);
 		panelFacture.setLayout(null);
 		
@@ -269,8 +275,11 @@ public class AppSuperCheapAuto extends JFrame {
 		modele.addColumn("Quantit�");
 		modele.addColumn("Prix");
 		
+		//Ecouteurs
 		tfNumMembre.addActionListener(ec);
+		nouvClient.addActionListener(ec);
 		
+		//Lecture des fichiers Excel
 		inp = new FileInputStream ( "Clients.xlsx");
         classeurClients = ( XSSFWorkbook ) WorkbookFactory.create(inp);
         feuilleClients = classeurClients.getSheetAt(0);
@@ -282,6 +291,8 @@ public class AppSuperCheapAuto extends JFrame {
         DataFormatter dataFormatter = new DataFormatter();
         DecimalFormat decimalFormat = new DecimalFormat("#.##");
         
+        //Loop permettant de lire chaque cellule de chaque ligne
+        //Fichier "Clients"
         for (Row rangee: feuilleClients) {
         	if (rangee.getRowNum() > 0) {
         		Cell cellule = rangee.getCell(0);
@@ -304,6 +315,7 @@ public class AppSuperCheapAuto extends JFrame {
         	}
         }
         
+        //Fichier "Produits"
         for (Row rangee: feuilleProduits) {
         	if (rangee.getRowNum() > 0) {
         		Cell cellule = rangee.getCell(0);
@@ -328,9 +340,16 @@ public class AppSuperCheapAuto extends JFrame {
             	Produit p = new Produit(code, nom, quantite, prix, points);
             	Inventaire.ajouterProduit(p);
             	
-            	System.out.println(Inventaire.getProduit(nom).getNom());
+            	//System.out.println(Inventaire.getProduit(nom).getNom());
         	}
         }
+        
+        Set<String> NomProduits=Inventaire.getListe().keySet();
+		//Pour chacune des clefs de mon set...
+		for(String produitsClef:NomProduits)
+		{ 
+			comboArticle.addItem(produitsClef);
+		}
 
 	}
 	
@@ -338,8 +357,24 @@ public class AppSuperCheapAuto extends JFrame {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			// TODO Auto-generated method stub
-			
+			if (e.getSource() == tfNumMembre) {
+				String num = tfNumMembre.getText();
+				System.out.println(num);
+				System.out.println();
+				
+				if (EnsembleClients.getListe().containsKey(num)) {
+					tfNomClient.setText(EnsembleClients.getListe().get(num).getNom());
+					tfPointsBoni.setText(Integer.toString(EnsembleClients.getListe().get(num).getNbPointsAcc()));
+				}
+						
+				else {
+					JOptionPane.showMessageDialog(AppSuperCheapAuto.this, "Ce client n'existe pas.");
+					
+				}
+			}
+			else if (e.getSource() == nouvClient) {
+				nc.setVisible(true);
+			}
 		}
 		
 	}
