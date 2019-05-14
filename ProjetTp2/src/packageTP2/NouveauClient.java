@@ -18,7 +18,7 @@ public class NouveauClient extends JDialog {
 
 	private JLabel jlNom;
 	private JLabel jlNumero;
-	private JTextField tfNumero;
+	protected JTextField tfNumero;
 	private JTextField tfNom;
 	private JButton ok;
 	private JButton annuler;
@@ -44,7 +44,7 @@ public class NouveauClient extends JDialog {
 	 ************************************/
 	public NouveauClient() {
 		setTitle("Inscription d'un nouveau client");
-		setBounds(100, 100, 450, 300);
+		setBounds(100, 100, 459, 300);
 		getContentPane().setLayout(null);
 		
 		

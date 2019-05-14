@@ -112,7 +112,7 @@ public class AppSuperCheapAuto extends JFrame {
 	 * @throws InvalidFormatException *
 	 ********************************/
 	public AppSuperCheapAuto() throws InvalidFormatException, IOException {
-		setBounds(100, 100, 497, 548);
+		setBounds(100, 100, 497, 569);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		getContentPane().setLayout(null);
 		
@@ -376,9 +376,19 @@ public class AppSuperCheapAuto extends JFrame {
 			}
 			else if (e.getSource() == nouvClient) {
 				nc.setVisible(true);
-				int n = 100000 + new Random().nextInt(900000);
-				String numGen = Integer.toString(n);
-				System.out.println(numGen);
+				boolean numExiste = true;
+				String numGen;
+				while (numExiste) {
+					int n = 100000 + new Random().nextInt(900000);
+					numGen = Integer.toString(n);
+					System.out.println(numGen);
+					if (!EnsembleClients.getListe().containsKey(numGen)) {
+						numExiste = false;
+					}
+					
+					nc.tfNumero.setText(numGen);
+				}
+				
 			}
 		}
 		
