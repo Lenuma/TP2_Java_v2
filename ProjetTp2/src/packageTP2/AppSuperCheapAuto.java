@@ -43,7 +43,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
 public class AppSuperCheapAuto extends JFrame {
-	private NouveauClient nc = new NouveauClient();
 	private Ecouteur ec = new Ecouteur();
 	private DefaultTableModel modele;
 	private Random rand = new Random();
@@ -52,9 +51,9 @@ public class AppSuperCheapAuto extends JFrame {
 	private JLabel jlNumMembre;
 	private JLabel jlNomClient;
 	private JLabel jlPointsBoni;
-	private JTextField tfNumMembre;
-	private JTextField tfNomClient;
-	private JTextField tfPointsBoni;
+	protected JTextField tfNumMembre;
+	protected JTextField tfNomClient;
+	protected JTextField tfPointsBoni;
 	private JPanel panelCommande;
 	private JLabel jlCommande;
 	private JLabel jlArticle;
@@ -221,12 +220,14 @@ public class AppSuperCheapAuto extends JFrame {
 		scrollPane.setViewportView(table);
 		
 		btnRadioComptant = new JRadioButton("Paiement comptant");
+		btnRadioComptant.setBackground(Color.RED);
 		btnRadioComptant.setForeground(Color.WHITE);
 		btnRadioComptant.setFont(new Font("Lucida Grande", Font.BOLD, 13));
 		btnRadioComptant.setBounds(6, 145, 163, 23);
 		panelFacture.add(btnRadioComptant);
 		
 		btnRadioCredit = new JRadioButton("Paiement crédit");
+		btnRadioCredit.setBackground(Color.RED);
 		btnRadioCredit.setForeground(Color.WHITE);
 		btnRadioCredit.setFont(new Font("Lucida Grande", Font.BOLD, 13));
 		btnRadioCredit.setBounds(181, 145, 138, 23);
@@ -280,6 +281,7 @@ public class AppSuperCheapAuto extends JFrame {
 		//Ecouteurs
 		tfNumMembre.addActionListener(ec);
 		nouvClient.addActionListener(ec);
+		comboArticle.addActionListener(ec);
 		
 		//Lecture des fichiers Excel
 		inp = new FileInputStream ( "Clients.xlsx");
@@ -375,13 +377,14 @@ public class AppSuperCheapAuto extends JFrame {
 				}
 			}
 			else if (e.getSource() == nouvClient) {
+				NouveauClient nc = new NouveauClient(AppSuperCheapAuto.this);
 				nc.setVisible(true);
 				boolean numExiste = true;
 				String numGen;
 				while (numExiste) {
 					int n = 100000 + new Random().nextInt(900000);
 					numGen = Integer.toString(n);
-					System.out.println(numGen);
+					//System.out.println(numGen);
 					if (!EnsembleClients.getListe().containsKey(numGen)) {
 						numExiste = false;
 					}
@@ -389,6 +392,14 @@ public class AppSuperCheapAuto extends JFrame {
 					nc.tfNumero.setText(numGen);
 				}
 				
+			}
+			else if (e.getSource() == comboArticle) {
+				String nom = (String) comboArticle.getSelectedItem();
+				
+				tfPrixUni.setText(Double.toString(Inventaire.getListe().get(nom).getPrix()));
+				tfQte.setText(Integer.toString(Inventaire.getListe().get(nom).getQteStock()));
+				//System.out.println(nom);
+				//Inventaire.getListe().get(nom);
 			}
 		}
 		
