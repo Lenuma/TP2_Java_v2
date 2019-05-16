@@ -232,6 +232,7 @@ public class AppSuperCheapAuto extends JFrame {
 		btnRadioComptant.setForeground(Color.WHITE);
 		btnRadioComptant.setFont(new Font("Lucida Grande", Font.BOLD, 13));
 		btnRadioComptant.setBounds(6, 145, 163, 23);
+		btnRadioComptant.setSelected(true);
 		panelFacture.add(btnRadioComptant);
 		
 		btnRadioCredit = new JRadioButton("Paiement crédit");
@@ -299,6 +300,9 @@ public class AppSuperCheapAuto extends JFrame {
 		comboArticle.addActionListener(ec);
 		btnAchat.addActionListener(ec);
 		btnTerminer.addActionListener(ec);
+		btnRadioComptant.addActionListener(ec);
+		btnRadioCredit.addActionListener(ec);
+		btnPayer.addActionListener(ec);
 		
 		//Lecture des fichiers Excel
 		inp = new FileInputStream ( "Clients.xlsx");
@@ -469,7 +473,29 @@ public class AppSuperCheapAuto extends JFrame {
 				modele.setValueAt("Total:", modele.getRowCount()-1, 1);
 				modele.setValueAt(decimalFormat.format(total), modele.getRowCount()-1, 2);
 				
-				
+			}
+			else if (e.getSource() == btnRadioComptant || e.getSource() == btnRadioCredit) {
+				if (btnRadioCredit.isSelected()) {
+					tfMontantDonne.setEditable(false);
+					tfMontantRemis.setEditable(false);
+				}
+				else if (btnRadioComptant.isSelected()) {
+					tfMontantDonne.setEditable(true);
+					tfMontantRemis.setEditable(true);
+				}
+			}
+			else if(e.getSource() == btnPayer) {
+				if (btnRadioComptant.isSelected()) {
+					if (tfMontantDonne.getText() != null && !(tfMontantDonne.getText().trim().isEmpty())) {
+						double total = cmd.calculerGrandTotal();
+						double montantRecu = Double.parseDouble(tfMontantDonne.getText());
+						
+						if (montantRecu > total) {
+							tfMontantRemis.setText(decimalFormat.format(montantRecu - total));
+							//System.out.println();
+						}
+					}
+				}
 			}
 		}
 		
