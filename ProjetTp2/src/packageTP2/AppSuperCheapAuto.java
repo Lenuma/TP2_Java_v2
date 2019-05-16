@@ -5,6 +5,7 @@ import java.awt.EventQueue;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import java.awt.Color;
@@ -20,9 +21,11 @@ import java.text.DecimalFormat;
 import java.util.Enumeration;
 import java.util.Random;
 import java.util.Set;
+import java.util.Vector;
 
 import javax.swing.JTextField;
 import javax.swing.JComboBox;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -46,6 +49,11 @@ public class AppSuperCheapAuto extends JFrame {
 	private Ecouteur ec = new Ecouteur();
 	private DefaultTableModel modele;
 	private Random rand = new Random();
+	
+	protected Commande cmd;
+	DecimalFormat decimalFormat = new DecimalFormat("#,##0.00");
+	
+	DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
 	
 	private JPanel panelClient;
 	private JLabel jlNumMembre;
@@ -233,6 +241,10 @@ public class AppSuperCheapAuto extends JFrame {
 		btnRadioCredit.setBounds(181, 145, 138, 23);
 		panelFacture.add(btnRadioCredit);
 		
+		ButtonGroup paymentButtons = new ButtonGroup();
+		paymentButtons.add(btnRadioComptant);
+		paymentButtons.add(btnRadioCredit);
+		
 		btnPayer = new JButton("Payer");
 		btnPayer.setFont(new Font("Lucida Grande", Font.BOLD, 13));
 		btnPayer.setBounds(322, 132, 133, 68);
@@ -277,11 +289,16 @@ public class AppSuperCheapAuto extends JFrame {
 		modele.addColumn("Produit");
 		modele.addColumn("Quantit�");
 		modele.addColumn("Prix");
+		renderer.setHorizontalAlignment(JLabel.RIGHT);
+		table.getColumnModel().getColumn(1).setCellRenderer(renderer);
+		table.getColumnModel().getColumn(2).setCellRenderer(renderer);
 		
 		//Ecouteurs
 		tfNumMembre.addActionListener(ec);
 		nouvClient.addActionListener(ec);
 		comboArticle.addActionListener(ec);
+		btnAchat.addActionListener(ec);
+		btnTerminer.addActionListener(ec);
 		
 		//Lecture des fichiers Excel
 		inp = new FileInputStream ( "Clients.xlsx");
@@ -293,7 +310,7 @@ public class AppSuperCheapAuto extends JFrame {
         feuilleProduits = classeurProduits.getSheetAt(0);
         
         DataFormatter dataFormatter = new DataFormatter();
-        DecimalFormat decimalFormat = new DecimalFormat("#.##");
+        
         
         //Loop permettant de lire chaque cellule de chaque ligne
         //Fichier "Clients"
@@ -369,6 +386,9 @@ public class AppSuperCheapAuto extends JFrame {
 				if (EnsembleClients.getListe().containsKey(num)) {
 					tfNomClient.setText(EnsembleClients.getListe().get(num).getNom());
 					tfPointsBoni.setText(Integer.toString(EnsembleClients.getListe().get(num).getNbPointsAcc()));
+					
+					//Création d'un objet commande lorsque le client existe
+					cmd = new Commande (tfNumMembre.getText());
 				}
 						
 				else {
@@ -392,6 +412,7 @@ public class AppSuperCheapAuto extends JFrame {
 					nc.tfNumero.setText(numGen);
 				}
 				
+				
 			}
 			else if (e.getSource() == comboArticle) {
 				String nom = (String) comboArticle.getSelectedItem();
@@ -400,6 +421,55 @@ public class AppSuperCheapAuto extends JFrame {
 				tfQte.setText(Integer.toString(Inventaire.getListe().get(nom).getQteStock()));
 				//System.out.println(nom);
 				//Inventaire.getListe().get(nom);
+			}
+			else if (e.getSource() == btnAchat) {
+				if (cmd != null) {
+					String nom = (String) comboArticle.getSelectedItem();
+					Item i = new Item(nom, 1, cmd.getNumero());
+					
+					if (Inventaire.getProduit(nom).modifierQteStock(1)) {
+						System.out.println(Inventaire.getProduit(nom).getQteStock());
+						
+						double prix = Inventaire.getListe().get(nom).getPrix();
+						
+						modele.addRow(new Object[] {nom, 1, prix});
+						tfQte.setText(Integer.toString(Inventaire.getListe().get(nom).getQteStock()));
+						
+						cmd.ajouterItem(i);
+					}
+					else {
+						JOptionPane.showMessageDialog(AppSuperCheapAuto.this, "En rupture de stock!");
+					}
+				}
+				else {
+					JOptionPane.showMessageDialog(AppSuperCheapAuto.this, "Aucun client associé à cette commande.");
+				}
+				
+			}
+			else if (e.getSource() == btnTerminer) {
+				double st = cmd.calculerSousTotal();
+				double tps = cmd.calculerTPS();
+				double tvq = cmd.calculerTVQ();
+				double total = cmd.calculerGrandTotal();
+				
+				modele.addRow(new Vector());
+				modele.addRow(new Vector());
+				modele.setValueAt("Sous-Total:", modele.getRowCount()-1, 1);
+				modele.setValueAt(decimalFormat.format(st), modele.getRowCount()-1, 2);
+				
+				modele.addRow(new Vector());
+				modele.setValueAt("TPS:", modele.getRowCount()-1, 1);
+				modele.setValueAt(decimalFormat.format(tps), modele.getRowCount()-1, 2);
+				
+				modele.addRow(new Vector());
+				modele.setValueAt("TVQ:", modele.getRowCount()-1, 1);
+				modele.setValueAt(decimalFormat.format(tvq), modele.getRowCount()-1, 2);
+				
+				modele.addRow(new Vector());
+				modele.setValueAt("Total:", modele.getRowCount()-1, 1);
+				modele.setValueAt(decimalFormat.format(total), modele.getRowCount()-1, 2);
+				
+				
 			}
 		}
 		

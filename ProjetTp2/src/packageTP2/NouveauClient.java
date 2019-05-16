@@ -107,8 +107,12 @@ public class NouveauClient extends JDialog {
 					a.tfNumMembre.setText(tfNumero.getText());
 					a.tfNomClient.setText(tfNom.getText());
 					a.tfPointsBoni.setText("0");
+					
+					//Création un objet commande lors de la création d'un client
+					a.cmd = new Commande(tfNumero.getText());
+					
 					NouveauClient.this.dispose();
-					System.out.println("ok!");
+					
 				}
 				else {
 					JOptionPane.showMessageDialog(NouveauClient.this, "Vous devez saisir un nom de client.");
