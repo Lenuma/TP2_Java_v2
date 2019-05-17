@@ -15,8 +15,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.DecimalFormat;
 import java.util.Enumeration;
 import java.util.Random;
@@ -52,6 +54,7 @@ public class AppSuperCheapAuto extends JFrame {
 	
 	protected Commande cmd;
 	DecimalFormat decimalFormat = new DecimalFormat("#,##0.00");
+	DataFormatter dataFormatter = new DataFormatter();
 	
 	DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
 	
@@ -93,6 +96,7 @@ public class AppSuperCheapAuto extends JFrame {
 	private JMenuBar menuBar;
 	private JMenu options;
 	private JMenuItem nouvClient;
+	private JMenuItem fermeture;
 	//private XSSFRow rangee;
 	//private XSSFCell cellule;
 	//private XSSFCell celluleTexte;
@@ -287,6 +291,9 @@ public class AppSuperCheapAuto extends JFrame {
 		nouvClient = new JMenuItem("Nouveau client");
 		options.add(nouvClient);
 		
+		fermeture = new JMenuItem("Fermeture de session");
+		options.add(fermeture);
+		
 		modele.addColumn("Produit");
 		modele.addColumn("Quantitï¿½");
 		modele.addColumn("Prix");
@@ -304,6 +311,7 @@ public class AppSuperCheapAuto extends JFrame {
 		btnRadioCredit.addActionListener(ec);
 		btnPayer.addActionListener(ec);
 		btnAnnuNouvComm.addActionListener(ec);
+		fermeture.addActionListener(ec);
 		
 		//Lecture des fichiers Excel
 		inp = new FileInputStream ( "Clients.xlsx");
@@ -313,8 +321,6 @@ public class AppSuperCheapAuto extends JFrame {
         inp2 = new FileInputStream ( "Produits.xlsx");
         classeurProduits = ( XSSFWorkbook ) WorkbookFactory.create(inp2);
         feuilleProduits = classeurProduits.getSheetAt(0);
-        
-        DataFormatter dataFormatter = new DataFormatter();
         
         
         //Loop permettant de lire chaque cellule de chaque ligne
@@ -525,19 +531,82 @@ public class AppSuperCheapAuto extends JFrame {
 				}
 			}
 			else if (e.getSource() == btnAnnuNouvComm) {
-				if (cmd.estPayee()) {
-					tfNumMembre.setText("");
-					tfNomClient.setText("");
-					tfPointsBoni.setText("");
+				tfNumMembre.setText("");
+				tfNomClient.setText("");
+				tfPointsBoni.setText("");
+				
+				for( int i = modele.getRowCount() - 1; i >= 0; i-- ) {
+			        modele.removeRow(i);
+			    }
+				
+				btnRadioComptant.setSelected(true);
+				
+				tfMontantDonne.setText("");
+				tfMontantRemis.setText("");
+				
+				if (!cmd.estPayee()) {
+					for (int i = 0; i < cmd.getItems().size(); i++) {
+						Inventaire.getProduit(cmd.getItems().elementAt(i).getNomProduit()).modifierQteStock(-(cmd.getItems().elementAt(i).getQte()));
+						//cmd.getItems().elementAt(i).getQte();
+						System.out.println("Qte apres remise: " + Inventaire.getProduit(cmd.getItems().elementAt(i).getNomProduit()).getQteStock());
+					}
 					
-					for( int i = modele.getRowCount() - 1; i >= 0; i-- ) {
-				        modele.removeRow(i);
-				    }
-					
-					btnRadioComptant.setSelected(true);
-					
-					tfMontantDonne.setText("");
-					tfMontantRemis.setText("");
+				}
+				//Écriture des fichiers Excel
+				for (Row rangee: feuilleProduits) {
+		        	if (rangee.getRowNum() > 0) {
+		        		Cell cellule = rangee.getCell(1);
+		            	String nom = dataFormatter.formatCellValue(cellule);
+		            	
+		        		int qte = Inventaire.getProduit(nom).getQteStock();
+		        		cellule = rangee.getCell(2);
+		        		
+		        		cellule.setCellValue(qte);
+		        		
+		        	}
+				}
+				
+				for (Row rangee: feuilleClients) {
+		        	if (rangee.getRowNum() > 0) {
+		        		Set<String> NumClient=EnsembleClients.getListe().keySet();
+		        		//Pour chacune des clefs de mon set...
+		        		for(String clientsClef:NumClient)
+		        		{ 
+		        			String num = EnsembleClients.getClient(clientsClef).getNoCarte(); 
+		        			Cell cellule = rangee.getCell(0);
+		        			cellule.setCellValue(num);
+		        			
+		        			String nom = EnsembleClients.getClient(clientsClef).getNom(); 
+		        			cellule = rangee.getCell(1);
+		        			cellule.setCellValue(nom);
+		        			
+		        			int pts = EnsembleClients.getClient(clientsClef).getNbPointsAcc(); 
+		        			cellule = rangee.getCell(2);
+		        			cellule.setCellValue(pts);
+		        			
+		        			double solde = EnsembleClients.getClient(clientsClef).getSoldeCarteCredit(); 
+		        			cellule = rangee.getCell(3);
+		        			cellule.setCellValue(solde);
+		        		}
+		        	}
+		        }
+				
+				
+				try {
+				OutputStream out = new FileOutputStream ( "Clients.xlsx");
+				classeurClients.write(out);
+				
+				OutputStream out2 = new FileOutputStream ( "Produits.xlsx");
+				classeurProduits.write(out2);
+				
+				inp.close();
+				inp2.close();
+				
+				out.close();
+				out2.close();
+				}
+				catch(Exception f) {
+					f.printStackTrace();
 				}
 			}
 		}
