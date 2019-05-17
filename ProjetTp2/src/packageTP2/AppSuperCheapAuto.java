@@ -303,6 +303,7 @@ public class AppSuperCheapAuto extends JFrame {
 		btnRadioComptant.addActionListener(ec);
 		btnRadioCredit.addActionListener(ec);
 		btnPayer.addActionListener(ec);
+		btnAnnuNouvComm.addActionListener(ec);
 		
 		//Lecture des fichiers Excel
 		inp = new FileInputStream ( "Clients.xlsx");
@@ -432,7 +433,7 @@ public class AppSuperCheapAuto extends JFrame {
 					Item i = new Item(nom, 1, cmd.getNumero());
 					
 					if (Inventaire.getProduit(nom).modifierQteStock(1)) {
-						System.out.println(Inventaire.getProduit(nom).getQteStock());
+						//System.out.println(Inventaire.getProduit(nom).getQteStock());
 						
 						double prix = Inventaire.getListe().get(nom).getPrix();
 						
@@ -487,14 +488,56 @@ public class AppSuperCheapAuto extends JFrame {
 			else if(e.getSource() == btnPayer) {
 				if (btnRadioComptant.isSelected()) {
 					if (tfMontantDonne.getText() != null && !(tfMontantDonne.getText().trim().isEmpty())) {
-						double total = cmd.calculerGrandTotal();
+						//double total = cmd.calculerGrandTotal();
 						double montantRecu = Double.parseDouble(tfMontantDonne.getText());
 						
-						if (montantRecu > total) {
-							tfMontantRemis.setText(decimalFormat.format(montantRecu - total));
+						if (EnsembleClients.getClient(tfNumMembre.getText()).assezArgent(cmd, montantRecu)) {
+							//System.out.println("Commande payée avant: " + cmd.estPayee());
+							//System.out.println("Points boni avant: " + EnsembleClients.getClient(tfNumMembre.getText()).getNbPointsAcc());
+							
+							double montantRemis = EnsembleClients.getClient(tfNumMembre.getText()).paieCommandeComptant(cmd, montantRecu);
+							tfMontantRemis.setText(Double.toString(montantRemis));
+							
+							//System.out.println("Commande payée après: " + cmd.estPayee());
+							//System.out.println("Points boni après: " + EnsembleClients.getClient(tfNumMembre.getText()).getNbPointsAcc());
 							//System.out.println();
 						}
+						else {
+							JOptionPane.showMessageDialog(AppSuperCheapAuto.this, "Montant donné insuffisant.");
+						}
 					}
+				}
+				else if (btnRadioCredit.isSelected()) {
+					//System.out.println("Commande payée avant: " + cmd.estPayee());
+					//System.out.println("Points boni avant: " + EnsembleClients.getClient(tfNumMembre.getText()).getNbPointsAcc());
+					//System.out.println("Solde crédit avant: " + EnsembleClients.getClient(tfNumMembre.getText()).getSoldeCarteCredit());
+					if (EnsembleClients.getClient(tfNumMembre.getText()).paieCommandeCredit(cmd)) {
+						//System.out.println("Commande payée apres: " + cmd.estPayee());
+						//System.out.println("Points boni apres: " + EnsembleClients.getClient(tfNumMembre.getText()).getNbPointsAcc());
+						//System.out.println("Solde crédit apres: " + EnsembleClients.getClient(tfNumMembre.getText()).getSoldeCarteCredit());
+						
+						JOptionPane.showMessageDialog(AppSuperCheapAuto.this, "Crédit suffisant. Merci!");
+					}
+					else {
+						JOptionPane.showMessageDialog(AppSuperCheapAuto.this, "Crédit insuffisant.");
+					}
+					
+				}
+			}
+			else if (e.getSource() == btnAnnuNouvComm) {
+				if (cmd.estPayee()) {
+					tfNumMembre.setText("");
+					tfNomClient.setText("");
+					tfPointsBoni.setText("");
+					
+					for( int i = modele.getRowCount() - 1; i >= 0; i-- ) {
+				        modele.removeRow(i);
+				    }
+					
+					btnRadioComptant.setSelected(true);
+					
+					tfMontantDonne.setText("");
+					tfMontantRemis.setText("");
 				}
 			}
 		}
