@@ -50,7 +50,8 @@ import javax.swing.JOptionPane;
 public class AppSuperCheapAuto extends JFrame {
 	private Ecouteur ec = new Ecouteur();
 	private DefaultTableModel modele;
-	private Random rand = new Random();
+	//private Random rand = new Random();
+	private Vector <String> nouvClients = new Vector();
 	
 	protected Commande cmd;
 	DecimalFormat decimalFormat = new DecimalFormat("#,##0.00");
@@ -97,9 +98,6 @@ public class AppSuperCheapAuto extends JFrame {
 	private JMenu options;
 	private JMenuItem nouvClient;
 	private JMenuItem fermeture;
-	//private XSSFRow rangee;
-	//private XSSFCell cellule;
-	//private XSSFCell celluleTexte;
 
 	/*********************************
 	 *             Main              *
@@ -343,7 +341,6 @@ public class AppSuperCheapAuto extends JFrame {
             	Client c = new Client(numero, nom, points, solde);
             	EnsembleClients.ajouterClient(c);
             	
-            	//System.out.println(EnsembleClients.getClient(numero).getSoldeCarteCredit());
         	}
         }
         
@@ -372,12 +369,11 @@ public class AppSuperCheapAuto extends JFrame {
             	Produit p = new Produit(code, nom, quantite, prix, points);
             	Inventaire.ajouterProduit(p);
             	
-            	//System.out.println(Inventaire.getProduit(nom).getNom());
         	}
         }
         
+        //Parcours de la hashtable ListeProduits afin de remplir le JComboBox
         Set<String> NomProduits=Inventaire.getListe().keySet();
-		//Pour chacune des clefs de mon set...
 		for(String produitsClef:NomProduits)
 		{ 
 			comboArticle.addItem(produitsClef);
@@ -389,11 +385,13 @@ public class AppSuperCheapAuto extends JFrame {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
+			
+			//1- Recherche d'un client
 			if (e.getSource() == tfNumMembre) {
 				String num = tfNumMembre.getText();
-				//System.out.println(num);
-				//System.out.println();
 				
+				//Parcours de la HashTable. Si le client existe, on remplit les champs appropriés
+				//Si le client n'existe pas, message d'erreur.
 				if (EnsembleClients.getListe().containsKey(num)) {
 					tfNomClient.setText(EnsembleClients.getListe().get(num).getNom());
 					tfPointsBoni.setText(Integer.toString(EnsembleClients.getListe().get(num).getNbPointsAcc()));
@@ -407,39 +405,49 @@ public class AppSuperCheapAuto extends JFrame {
 					
 				}
 			}
+			
+			//2- Création d'un nouveau client
 			else if (e.getSource() == nouvClient) {
+				//Création d'un nouvelle Fenêtre JDialog pour afin de saisir un nouveau client
 				NouveauClient nc = new NouveauClient(AppSuperCheapAuto.this);
 				nc.setVisible(true);
+				
+				//Générer un numéro aléatoire de 6 chiffres
+				//Vérifier si ce numéro n'est pas déjà attribué à un client. 
+				//Si ce n'est pas le cas, remplir le champ approprié de la fenêtre JDialog
+				//Ajouter ce nouveau client au vecteur de nouveau client
 				boolean numExiste = true;
 				String numGen;
 				while (numExiste) {
 					int n = 100000 + new Random().nextInt(900000);
 					numGen = Integer.toString(n);
-					//System.out.println(numGen);
+		
 					if (!EnsembleClients.getListe().containsKey(numGen)) {
 						numExiste = false;
 					}
 					
 					nc.tfNumero.setText(numGen);
+					nouvClients.addElement(numGen);
 				}
 				
 				
 			}
+			
+			//3- Sélection d'un article du JComboBox
 			else if (e.getSource() == comboArticle) {
 				String nom = (String) comboArticle.getSelectedItem();
 				
 				tfPrixUni.setText(Double.toString(Inventaire.getListe().get(nom).getPrix()));
 				tfQte.setText(Integer.toString(Inventaire.getListe().get(nom).getQteStock()));
-				//System.out.println(nom);
-				//Inventaire.getListe().get(nom);
 			}
+			
+			//4- Ajout de l'article sélectionné à la JTable
 			else if (e.getSource() == btnAchat) {
 				if (cmd != null) {
 					String nom = (String) comboArticle.getSelectedItem();
 					Item i = new Item(nom, 1, cmd.getNumero());
 					
 					if (Inventaire.getProduit(nom).modifierQteStock(1)) {
-						//System.out.println(Inventaire.getProduit(nom).getQteStock());
 						
 						double prix = Inventaire.getListe().get(nom).getPrix();
 						
@@ -498,15 +506,15 @@ public class AppSuperCheapAuto extends JFrame {
 						double montantRecu = Double.parseDouble(tfMontantDonne.getText());
 						
 						if (EnsembleClients.getClient(tfNumMembre.getText()).assezArgent(cmd, montantRecu)) {
-							//System.out.println("Commande payée avant: " + cmd.estPayee());
-							//System.out.println("Points boni avant: " + EnsembleClients.getClient(tfNumMembre.getText()).getNbPointsAcc());
+							System.out.println("Commande payée avant: " + cmd.estPayee());
+							System.out.println("Points boni avant: " + EnsembleClients.getClient(tfNumMembre.getText()).getNbPointsAcc());
 							
 							double montantRemis = EnsembleClients.getClient(tfNumMembre.getText()).paieCommandeComptant(cmd, montantRecu);
 							tfMontantRemis.setText(Double.toString(montantRemis));
 							
-							//System.out.println("Commande payée après: " + cmd.estPayee());
-							//System.out.println("Points boni après: " + EnsembleClients.getClient(tfNumMembre.getText()).getNbPointsAcc());
-							//System.out.println();
+							System.out.println("Commande payée après: " + cmd.estPayee());
+							System.out.println("Points boni après: " + EnsembleClients.getClient(tfNumMembre.getText()).getNbPointsAcc());
+							System.out.println();
 						}
 						else {
 							JOptionPane.showMessageDialog(AppSuperCheapAuto.this, "Montant donné insuffisant.");
@@ -514,13 +522,13 @@ public class AppSuperCheapAuto extends JFrame {
 					}
 				}
 				else if (btnRadioCredit.isSelected()) {
-					//System.out.println("Commande payée avant: " + cmd.estPayee());
-					//System.out.println("Points boni avant: " + EnsembleClients.getClient(tfNumMembre.getText()).getNbPointsAcc());
-					//System.out.println("Solde crédit avant: " + EnsembleClients.getClient(tfNumMembre.getText()).getSoldeCarteCredit());
+					System.out.println("Commande payée avant: " + cmd.estPayee());
+					System.out.println("Points boni avant: " + EnsembleClients.getClient(tfNumMembre.getText()).getNbPointsAcc());
+					System.out.println("Solde crédit avant: " + EnsembleClients.getClient(tfNumMembre.getText()).getSoldeCarteCredit());
 					if (EnsembleClients.getClient(tfNumMembre.getText()).paieCommandeCredit(cmd)) {
-						//System.out.println("Commande payée apres: " + cmd.estPayee());
-						//System.out.println("Points boni apres: " + EnsembleClients.getClient(tfNumMembre.getText()).getNbPointsAcc());
-						//System.out.println("Solde crédit apres: " + EnsembleClients.getClient(tfNumMembre.getText()).getSoldeCarteCredit());
+						System.out.println("Commande payée apres: " + cmd.estPayee());
+						System.out.println("Points boni apres: " + EnsembleClients.getClient(tfNumMembre.getText()).getNbPointsAcc());
+						System.out.println("Solde crédit apres: " + EnsembleClients.getClient(tfNumMembre.getText()).getSoldeCarteCredit());
 						
 						JOptionPane.showMessageDialog(AppSuperCheapAuto.this, "Crédit suffisant. Merci!");
 					}
@@ -552,7 +560,10 @@ public class AppSuperCheapAuto extends JFrame {
 					}
 					
 				}
-				//�criture des fichiers Excel
+			}
+			else if (e.getSource() == fermeture) {
+				
+				//�criture des fichiers Excel
 				for (Row rangee: feuilleProduits) {
 		        	if (rangee.getRowNum() > 0) {
 		        		Cell cellule = rangee.getCell(1);
@@ -566,49 +577,67 @@ public class AppSuperCheapAuto extends JFrame {
 		        	}
 				}
 				
-				for (Row rangee: feuilleClients) {
-		        	if (rangee.getRowNum() > 0) {
-		        		Set<String> NumClient=EnsembleClients.getListe().keySet();
-		        		//Pour chacune des clefs de mon set...
-		        		for(String clientsClef:NumClient)
-		        		{ 
-		        			String num = EnsembleClients.getClient(clientsClef).getNoCarte(); 
-		        			Cell cellule = rangee.getCell(0);
-		        			cellule.setCellValue(num);
-		        			
-		        			String nom = EnsembleClients.getClient(clientsClef).getNom(); 
-		        			cellule = rangee.getCell(1);
-		        			cellule.setCellValue(nom);
-		        			
-		        			int pts = EnsembleClients.getClient(clientsClef).getNbPointsAcc(); 
-		        			cellule = rangee.getCell(2);
-		        			cellule.setCellValue(pts);
-		        			
-		        			double solde = EnsembleClients.getClient(clientsClef).getSoldeCarteCredit(); 
-		        			cellule = rangee.getCell(3);
-		        			cellule.setCellValue(solde);
-		        		}
-		        	}
-		        }
 				
+				  for (Row rangee: feuilleClients) { 
+					  
+					  if (rangee.getRowNum() > 0) { 
+						  Cell cellule= rangee.getCell(0); 
+						  String numero = dataFormatter.formatCellValue(cellule);
+				  
+						  int pts = EnsembleClients.getClient(numero).getNbPointsAcc(); 
+						  cellule = rangee.getCell(2); cellule.setCellValue(pts);
+				  
+						  double solde = EnsembleClients.getClient(numero).getSoldeCarteCredit();
+						  cellule = rangee.getCell(3); cellule.setCellValue(solde);
+				  
+					  } 
+				  }
+				 
+				if (nouvClients.size() > 0) {
+					for (int i = 0; i < nouvClients.size(); i++) {
+						int rowNum = feuilleClients.getLastRowNum();
+						Row  nouvelleRangee = feuilleClients.createRow(++rowNum);
+						Cell nouvelleCellule0 = nouvelleRangee.createCell(0);
+						Cell nouvelleCellule1 = nouvelleRangee.createCell(1);
+						Cell nouvelleCellule2 = nouvelleRangee.createCell(2);
+						Cell nouvelleCellule3 = nouvelleRangee.createCell(3);
+						
+						int num = Integer.parseInt(EnsembleClients.getClient(nouvClients.elementAt(i)).getNoCarte());
+						nouvelleCellule0.setCellValue(num);
+						
+						String nom = EnsembleClients.getClient(nouvClients.elementAt(i)).getNom();
+						nouvelleCellule1.setCellValue(nom);
+						
+						int pts = EnsembleClients.getClient(nouvClients.elementAt(i)).getNbPointsAcc();
+						nouvelleCellule2.setCellValue(pts);
+						
+						double solde = EnsembleClients.getClient(nouvClients.elementAt(i)).getSoldeCarteCredit();
+						nouvelleCellule3.setCellValue(solde);
+					}
+					
+					
+				}
 				
 				try {
-				OutputStream out = new FileOutputStream ( "Clients.xlsx");
-				classeurClients.write(out);
-				
-				OutputStream out2 = new FileOutputStream ( "Produits.xlsx");
-				classeurProduits.write(out2);
-				
-				inp.close();
-				inp2.close();
-				
-				out.close();
-				out2.close();
+					OutputStream out = new FileOutputStream ( "Clients.xlsx");
+					classeurClients.write(out);
+					
+					OutputStream out2 = new FileOutputStream ( "Produits.xlsx");
+					classeurProduits.write(out2);
+					
+					inp.close();
+					inp2.close();
+					
+					out.close();
+					out2.close();
 				}
 				catch(Exception f) {
 					f.printStackTrace();
 				}
+				
+				System.exit(0);
 			}
+				
 		}
 		
 	}
