@@ -37,7 +37,7 @@ private double soldeCarteCredit;
   this.nbPointsAcc+= nbPointsSupp;
   }
 
- 
+  //Méthode booléenne qui détermine si le montant donné est supérieur ou égal à au montant de la commande
   public boolean assezArgent ( Commande c, double montant )
   {
    double total = c.calculerGrandTotal();
@@ -46,6 +46,7 @@ private double soldeCarteCredit;
   else 
     return false;
   }
+  
   public int arrondirCent ( double montant )
   {
 	  double montantEnCentsAvecPoussieres = montant * 100;
@@ -53,6 +54,7 @@ private double soldeCarteCredit;
 	  return montantEnCents;
   }
   
+  //La méthode "paieCommandeComptant" calcule également les points boni et met la variable "estPaye" à true
   public double paieCommandeComptant ( Commande c, double montant )
   {
   double total = c.calculerGrandTotal();
@@ -89,6 +91,8 @@ private double soldeCarteCredit;
   return change;
   }
   
+  //vérification du solde de crédit suffisant grâce à la méthode "paieCommandeCredit"
+  //La méthode "paieCommandeCredit" calcule également les points boni et le solde et met la variable "estPaye" à true
   public boolean paieCommandeCredit ( Commande c )
   {
   double total = c.calculerGrandTotal();

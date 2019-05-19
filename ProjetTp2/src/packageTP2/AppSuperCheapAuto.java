@@ -402,7 +402,9 @@ public class AppSuperCheapAuto extends JFrame {
 						
 				else {
 					JOptionPane.showMessageDialog(AppSuperCheapAuto.this, "Ce client n'existe pas.");
-					
+					tfNumMembre.setText("");
+					tfNomClient.setText("");
+					tfPointsBoni.setText("");
 				}
 			}
 			
@@ -515,45 +517,43 @@ public class AppSuperCheapAuto extends JFrame {
 			
 			//7- Payer la commande
 			else if(e.getSource() == btnPayer) {
+				//Si le bouton "comptant" est sélectionné, on s'assure que le champ "montantDonne" est adéquatement complété
+				//S'assurer que le montant donné est suffisant grâce à la méthode "assezArgent". La méthode "paieCommandeComptant" calcule également les points boni et met la variable "estPaye" à true
+				//Le cas échéant, remplir le champ de texte "montantRemis". Sinon, message d'erreur
 				if (btnRadioComptant.isSelected()) {
 					if (tfMontantDonne.getText() != null && !(tfMontantDonne.getText().trim().isEmpty())) {
-						//double total = cmd.calculerGrandTotal();
+						
 						double montantRecu = Double.parseDouble(tfMontantDonne.getText());
 						
 						if (EnsembleClients.getClient(tfNumMembre.getText()).assezArgent(cmd, montantRecu)) {
-							System.out.println("Commande payÃ©e avant: " + cmd.estPayee());
-							System.out.println("Points boni avant: " + EnsembleClients.getClient(tfNumMembre.getText()).getNbPointsAcc());
 							
 							double montantRemis = EnsembleClients.getClient(tfNumMembre.getText()).paieCommandeComptant(cmd, montantRecu);
 							tfMontantRemis.setText(Double.toString(montantRemis));
 							
-							System.out.println("Commande payÃ©e aprÃ¨s: " + cmd.estPayee());
-							System.out.println("Points boni aprÃ¨s: " + EnsembleClients.getClient(tfNumMembre.getText()).getNbPointsAcc());
-							System.out.println();
 						}
 						else {
 							JOptionPane.showMessageDialog(AppSuperCheapAuto.this, "Montant donnÃ© insuffisant.");
 						}
 					}
 				}
+				//Si le bouton radio "crédit" est sélectionné, vérification du solde de crédit suffisant grâce à la méthode "paieCommandeCredit"
 				else if (btnRadioCredit.isSelected()) {
-					System.out.println("Commande payÃ©e avant: " + cmd.estPayee());
-					System.out.println("Points boni avant: " + EnsembleClients.getClient(tfNumMembre.getText()).getNbPointsAcc());
-					System.out.println("Solde crÃ©dit avant: " + EnsembleClients.getClient(tfNumMembre.getText()).getSoldeCarteCredit());
+					//La méthode "paieCommandeCredit" calcule également les points boni et le solde et met la variable "estPaye" à true
+					//Faire un message "Crédit suffisant" si suffisament de crédit. Sinon, message d'erreur 
 					if (EnsembleClients.getClient(tfNumMembre.getText()).paieCommandeCredit(cmd)) {
-						System.out.println("Commande payÃ©e apres: " + cmd.estPayee());
-						System.out.println("Points boni apres: " + EnsembleClients.getClient(tfNumMembre.getText()).getNbPointsAcc());
-						System.out.println("Solde crÃ©dit apres: " + EnsembleClients.getClient(tfNumMembre.getText()).getSoldeCarteCredit());
-						
 						JOptionPane.showMessageDialog(AppSuperCheapAuto.this, "CrÃ©dit suffisant. Merci!");
 					}
 					else {
 						JOptionPane.showMessageDialog(AppSuperCheapAuto.this, "CrÃ©dit insuffisant.");
 					}
-					
 				}
 			}
+			
+			//8- Annuler commande / Nouvelle commande
 			else if (e.getSource() == btnAnnuNouvComm) {
+				//Pour "annuler commande" ou "nouvelle commande":
+				//Effacer tous les champs concernés de même que ce qu'il y a dans la Jtable
+				//Remet, en sélection par défaut, le bouton "comptant"
 				tfNumMembre.setText("");
 				tfNomClient.setText("");
 				tfPointsBoni.setText("");
@@ -569,18 +569,23 @@ public class AppSuperCheapAuto extends JFrame {
 				tfMontantDonne.setEditable(true);
 				tfMontantRemis.setEditable(true);
 				
+				//Pour "annuler commande" seulement:
+				//Remet les quantité achetées (mais non payées) en stock
+				//Pour ce faire, on utilise encore la méthode "modifierQteStock". Or, on lui passe une quantité négative en paramètre 
+				//Comme cette méthode soustrait la quantité passée en paramètre des stocks, en passant une quantité négative, on ajoute au stock 
 				if (!cmd.estPayee()) {
 					for (int i = 0; i < cmd.getItems().size(); i++) {
 						Inventaire.getProduit(cmd.getItems().elementAt(i).getNomProduit()).modifierQteStock(-(cmd.getItems().elementAt(i).getQte()));
-						//cmd.getItems().elementAt(i).getQte();
-						System.out.println("Qte apres remise: " + Inventaire.getProduit(cmd.getItems().elementAt(i).getNomProduit()).getQteStock());
 					}
 					
 				}
 			}
+			//9- Fermeture de la session
 			else if (e.getSource() == fermeture) {
 				
 				//ï¿½criture des fichiers Excel
+				//Fichier "Produits.xlsx"
+				//Uniquement besoin de modifier les cellules de quantité en stock
 				for (Row rangee: feuilleProduits) {
 		        	if (rangee.getRowNum() > 0) {
 		        		Cell cellule = rangee.getCell(1);
@@ -594,22 +599,24 @@ public class AppSuperCheapAuto extends JFrame {
 		        	}
 				}
 				
-				
-				  for (Row rangee: feuilleClients) { 
-					  
-					  if (rangee.getRowNum() > 0) { 
-						  Cell cellule= rangee.getCell(0); 
-						  String numero = dataFormatter.formatCellValue(cellule);
+				//Fichier "Clients.xlsx"
+				//Modification des cellules Points accumululés et solde
+				for (Row rangee: feuilleClients) { 
 				  
-						  int pts = EnsembleClients.getClient(numero).getNbPointsAcc(); 
-						  cellule = rangee.getCell(2); cellule.setCellValue(pts);
-				  
-						  double solde = EnsembleClients.getClient(numero).getSoldeCarteCredit();
-						  cellule = rangee.getCell(3); cellule.setCellValue(solde);
-				  
-					  } 
-				  }
-				 
+					if (rangee.getRowNum() > 0) { 
+						Cell cellule= rangee.getCell(0); 
+						String numero = dataFormatter.formatCellValue(cellule);
+			  
+						int pts = EnsembleClients.getClient(numero).getNbPointsAcc(); 
+						cellule = rangee.getCell(2); cellule.setCellValue(pts);
+			  
+						double solde = EnsembleClients.getClient(numero).getSoldeCarteCredit();
+						cellule = rangee.getCell(3); cellule.setCellValue(solde);
+			  
+					} 
+				}
+				//Ajout des nouveaux clients au fichier "Clients..xlsx"
+				//Les nouveaux clients ont été ajoutés au fur et à mesure au vecteur "nouvClients"
 				if (nouvClients.size() > 0) {
 					for (int i = 0; i < nouvClients.size(); i++) {
 						int rowNum = feuilleClients.getLastRowNum();

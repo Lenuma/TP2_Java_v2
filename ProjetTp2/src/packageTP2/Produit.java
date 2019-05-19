@@ -37,6 +37,8 @@ public int getPoints()
 {
 return points;
 }
+//Vérifie si la quantité en stock en suffisante
+//Le cas échéant, modifie la quantité en stock par la quantité passée en paramètre
 public boolean modifierQteStock ( int qteAchetee)
 {
 if ( qteAchetee <= qteStock )
