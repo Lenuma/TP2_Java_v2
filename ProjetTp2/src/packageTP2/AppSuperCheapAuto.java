@@ -443,10 +443,16 @@ public class AppSuperCheapAuto extends JFrame {
 			
 			//4- Ajout de l'article sélectionné à la JTable
 			else if (e.getSource() == btnAchat) {
+				//Vérifier s'il y a un client de sélectionné (S'il y a un objet commande, alors un client est sélectionné)
+				//Le cas échéant, un objet item est créé. Sinon, message d'erreur
 				if (cmd != null) {
 					String nom = (String) comboArticle.getSelectedItem();
 					Item i = new Item(nom, 1, cmd.getNumero());
 					
+					//Vérifier si le produit est en stock en quantité suffisante avec la méthode "modifieQteStock"
+					//Le cas échéant, cette méthode ajuste le stock du produit. Sinon, message d'erreur
+					//Ajouter une ligne à la JTable avec le produit et remplir le champ de texte approprié
+					//Ajouter le produit à la commande
 					if (Inventaire.getProduit(nom).modifierQteStock(1)) {
 						
 						double prix = Inventaire.getListe().get(nom).getPrix();
@@ -465,7 +471,11 @@ public class AppSuperCheapAuto extends JFrame {
 				}
 				
 			}
+			
+			// 5- Finaliser la commande
 			else if (e.getSource() == btnTerminer) {
+				//Calculer le total et les taxes de la commande 
+				//Insérer de nouvelles lignes dans la JTable pour laffichage
 				double st = cmd.calculerSousTotal();
 				double tps = cmd.calculerTPS();
 				double tvq = cmd.calculerTVQ();
@@ -489,7 +499,10 @@ public class AppSuperCheapAuto extends JFrame {
 				modele.setValueAt(decimalFormat.format(total), modele.getRowCount()-1, 2);
 				
 			}
+			
+			//6- Déterminer si le paiement est comptant ou crédit 
 			else if (e.getSource() == btnRadioComptant || e.getSource() == btnRadioCredit) {
+				//Si l'option "crédit" est sélectionnée, les champs de texte "montants" ne sont pas éditables.
 				if (btnRadioCredit.isSelected()) {
 					tfMontantDonne.setEditable(false);
 					tfMontantRemis.setEditable(false);
@@ -499,6 +512,8 @@ public class AppSuperCheapAuto extends JFrame {
 					tfMontantRemis.setEditable(true);
 				}
 			}
+			
+			//7- Payer la commande
 			else if(e.getSource() == btnPayer) {
 				if (btnRadioComptant.isSelected()) {
 					if (tfMontantDonne.getText() != null && !(tfMontantDonne.getText().trim().isEmpty())) {
@@ -551,6 +566,8 @@ public class AppSuperCheapAuto extends JFrame {
 				
 				tfMontantDonne.setText("");
 				tfMontantRemis.setText("");
+				tfMontantDonne.setEditable(true);
+				tfMontantRemis.setEditable(true);
 				
 				if (!cmd.estPayee()) {
 					for (int i = 0; i < cmd.getItems().size(); i++) {
